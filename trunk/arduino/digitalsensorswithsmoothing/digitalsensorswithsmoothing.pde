@@ -5,7 +5,7 @@
 #define NUMDIGINPUTS 2   // number of sensors connected. 
 #define TIMEOUT 1000     // timeout for echo pulse return in milliseconds. 
 #define LEDpin 13
- 
+
 int ultraSoundSignal[NUMDIGINPUTS] = {3,4};  // Ultrasound signal pin
 unsigned long ultrasoundValue[NUMDIGINPUTS] = {0,0}; 
 
@@ -31,56 +31,58 @@ void setup()
   for (int k = 0;k<NUMDIGINPUTS; k++)  {
     pinMode(ultraSoundSignal[k],OUTPUT);
   }
-    
+
 }
 
 unsigned long ping(int digitalinputpin){
- 
-   long duration = 0;
-   long inches = 0;
-   long cm = 0 ;
-   ultrasoundValue[digitalinputpin] = 0;
-   // We need some sort of test to determine whether or not the sensor is plugged in? 
-   // At the moment, if one sensor is removed, it just defaults to the other sensors value. 
-  
-    // The PING is triggered by a HIGH pulse of 2 or more microseconds.
-    // We give a short LOW pulse beforehand to ensure a clean HIGH pulse.
-    pinMode(ultraSoundSignal[digitalinputpin], OUTPUT);
-    digitalWrite(ultraSoundSignal[digitalinputpin], LOW);
-    delayMicroseconds(2);
-    digitalWrite(ultraSoundSignal[digitalinputpin], HIGH);
-    delayMicroseconds(5);
-    digitalWrite(ultraSoundSignal[digitalinputpin], LOW);
 
-    // The same pin is used to read the signal from the PING: a HIGH
-    // pulse whose duration is the time (in microseconds) from the sending
-    // of the ping to the reception of its echo off of an object.
-    pinMode(ultraSoundSignal[digitalinputpin], INPUT);
-    ultrasoundValue[digitalinputpin] = pulseIn(ultraSoundSignal[digitalinputpin], HIGH);
-    // convert the time into a distance
-    inches = microsecondsToInches(ultrasoundValue[digitalinputpin]);
-    cm = microsecondsToCentimeters(ultrasoundValue[digitalinputpin]);
-    ultrasoundValue[digitalinputpin] = cm;  
-  
+  long duration = 0;
+  long inches = 0;
+  long cm = 0 ;
+  ultrasoundValue[digitalinputpin] = 0;
+  // We need some sort of test to determine whether or not the sensor is plugged in? 
+  // At the moment, if one sensor is removed, it just defaults to the other sensors value. 
+
+  // The PING is triggered by a HIGH pulse of 2 or more microseconds.
+  // We give a short LOW pulse beforehand to ensure a clean HIGH pulse.
+  pinMode(ultraSoundSignal[digitalinputpin], OUTPUT);
+  digitalWrite(ultraSoundSignal[digitalinputpin], LOW);
+  delayMicroseconds(2);
+  digitalWrite(ultraSoundSignal[digitalinputpin], HIGH);
+  delayMicroseconds(5);
+  digitalWrite(ultraSoundSignal[digitalinputpin], LOW);
+
+  // The same pin is used to read the signal from the PING: a HIGH
+  // pulse whose duration is the time (in microseconds) from the sending
+  // of the ping to the reception of its echo off of an object.
+  pinMode(ultraSoundSignal[digitalinputpin], INPUT);
+  ultrasoundValue[digitalinputpin] = pulseIn(ultraSoundSignal[digitalinputpin], HIGH);
+
+  ultrasoundValue[digitalinputpin] = smoothfilter( ultrasoundValue[digitalinputpin],digitalinputpin);
+  // convert the time into a distance
+  inches = microsecondsToInches(ultrasoundValue[digitalinputpin]);
+  cm = microsecondsToCentimeters(ultrasoundValue[digitalinputpin]);
+  ultrasoundValue[digitalinputpin] = cm;  
+
   //  Serial.println(ultrasoundValue[digitalinputpin]);   
-    return ultrasoundValue[digitalinputpin]; 
+  return ultrasoundValue[digitalinputpin]; 
 }
 
 
 int smoothfilter(int x, int digitalinputpin){
 
-     // Moving average smoothing filter implementation.
-     total[digitalinputpin] -= readings[digitalinputpin][index[digitalinputpin]];
-     readings[digitalinputpin][index[digitalinputpin]] = x;
-     total[digitalinputpin] += readings[digitalinputpin][index[digitalinputpin]];
-     index[digitalinputpin] = (index[digitalinputpin] + 1);
- 
-     if (index[digitalinputpin] >= NUMREADINGS)
-     index[digitalinputpin] = 0;
- 
-     average = total[digitalinputpin] / NUMREADINGS;
+  // Moving average smoothing filter implementation.
+  total[digitalinputpin] -= readings[digitalinputpin][index[digitalinputpin]];
+  readings[digitalinputpin][index[digitalinputpin]] = x;
+  total[digitalinputpin] += readings[digitalinputpin][index[digitalinputpin]];
+  index[digitalinputpin] = (index[digitalinputpin] + 1);
 
-     return average; 
+  if (index[digitalinputpin] >= NUMREADINGS)
+    index[digitalinputpin] = 0;
+
+  average = total[digitalinputpin] / NUMREADINGS;
+
+  return average; 
 }
 
 
@@ -90,21 +92,21 @@ void loop()
     started = Serial.read();
   }
   if(started!=48){
-    
+
     for (digitalinputpin = 0; digitalinputpin < NUMDIGINPUTS; digitalinputpin++) {
       int x = 0;
       x = ping(digitalinputpin);
-      // Serial.print(x,DEC);
-    
-     // Blink an LED and include a DELAY between each sensor pulse. 
+      Serial.print(x,DEC);
+      Serial.print(' ');    
+      // Blink an LED and include a DELAY between each sensor pulse. 
       digitalWrite(LEDpin,HIGH); //turn LED on
       delay(50); //delay 1/4 seconds.
       digitalWrite(LEDpin,LOW); //turn LED off    
-     
-      average = smoothfilter(x,digitalinputpin);
-      Serial.print(' ');
-      Serial.print(average,DEC);
-    
+
+      // average = smoothfilter(x,digitalinputpin);
+
+      // Serial.print(average,DEC);
+
     }
     Serial.println();
   }
