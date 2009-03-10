@@ -1,17 +1,21 @@
 // Digital Read of Maxbotix Ultrasonic Rangefinder for greater accuracy and less noise over the cable length. 
 // with a smoothing filter. 
 // 
+// #include <stdio.h>
+
 #define NUMREADINGS 3    // number of readings to apply the filter over. Change to decreaase lag, or improve noise problems. 
-#define NUMDIGINPUTS 2   // number of sensors connected. 
+#define NUMDIGINPUTS 1   // number of sensors connected. 
+#define LOOPDELAY 50
 #define TIMEOUT 1000     // timeout for echo pulse return in milliseconds. 
 #define LEDpin 13
 
-int ultraSoundSignal[NUMDIGINPUTS] = {3,4};  // Ultrasound signal pin
-unsigned long ultrasoundValue[NUMDIGINPUTS] = {0,0}; 
+int ultraSoundSignal[NUMDIGINPUTS] = {3};  // Ultrasound signal pin
+unsigned long ultrasoundValue[NUMDIGINPUTS] = {0}; 
 
 int readings[NUMDIGINPUTS][NUMREADINGS];  // the readings from the analog input.
 int total[NUMDIGINPUTS];
 int index[NUMDIGINPUTS];
+int lastvalue[NUMDIGINPUTS];
 
 int started;
 int average = 0;
@@ -58,7 +62,13 @@ unsigned long ping(int digitalinputpin){
   pinMode(ultraSoundSignal[digitalinputpin], INPUT);
   ultrasoundValue[digitalinputpin] = pulseIn(ultraSoundSignal[digitalinputpin], HIGH);
 
-  ultrasoundValue[digitalinputpin] = smoothfilter( ultrasoundValue[digitalinputpin],digitalinputpin);
+  if ( ultrasoundValue[digitalinputpin] < 0) {
+       ultrasoundValue[digitalinputpin] = lastvalue[digitalinputpin];
+  }
+  lastvalue[digitalinputpin] = ultrasoundValue[digitalinputpin];
+  
+   //ultrasoundValue[digitalinputpin] = smoothfilter( ultrasoundValue[digitalinputpin],digitalinputpin);
+  
   // convert the time into a distance
   inches = microsecondsToInches(ultrasoundValue[digitalinputpin]);
   cm = microsecondsToCentimeters(ultrasoundValue[digitalinputpin]);
@@ -100,13 +110,11 @@ void loop()
       Serial.print(' ');    
       // Blink an LED and include a DELAY between each sensor pulse. 
       digitalWrite(LEDpin,HIGH); //turn LED on
-      delay(50); //delay 1/4 seconds.
+      delay(LOOPDELAY); //delay 1/4 seconds.
       digitalWrite(LEDpin,LOW); //turn LED off    
 
       // average = smoothfilter(x,digitalinputpin);
-
       // Serial.print(average,DEC);
-
     }
     Serial.println();
   }
