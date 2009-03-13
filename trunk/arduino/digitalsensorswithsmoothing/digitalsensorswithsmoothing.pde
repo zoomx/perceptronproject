@@ -3,13 +3,13 @@
 // 
 // #include <stdio.h>
 
-#define NUMREADINGS 3    // number of readings to apply the filter over. Change to decreaase lag, or improve noise problems. 
+#define NUMREADINGS 10    // number of readings to apply the filter over. Change to decreaase lag, or improve noise problems. 
 #define NUMDIGINPUTS 1   // number of sensors connected. 
 #define LOOPDELAY 50
 #define TIMEOUT 1000     // timeout for echo pulse return in milliseconds. 
 #define LEDpin 13
 
-int ultraSoundSignal[NUMDIGINPUTS] = {3};  // Ultrasound signal pin
+int ultraSoundSignal[NUMDIGINPUTS] = {4};  // Ultrasound signal pin
 unsigned long ultrasoundValue[NUMDIGINPUTS] = {0}; 
 
 int readings[NUMDIGINPUTS][NUMREADINGS];  // the readings from the analog input.
@@ -62,10 +62,6 @@ unsigned long ping(int digitalinputpin){
   pinMode(ultraSoundSignal[digitalinputpin], INPUT);
   ultrasoundValue[digitalinputpin] = pulseIn(ultraSoundSignal[digitalinputpin], HIGH);
 
-  if ( ultrasoundValue[digitalinputpin] < 0) {
-       ultrasoundValue[digitalinputpin] = lastvalue[digitalinputpin];
-  }
-  lastvalue[digitalinputpin] = ultrasoundValue[digitalinputpin];
   
    //ultrasoundValue[digitalinputpin] = smoothfilter( ultrasoundValue[digitalinputpin],digitalinputpin);
   
@@ -74,8 +70,9 @@ unsigned long ping(int digitalinputpin){
   cm = microsecondsToCentimeters(ultrasoundValue[digitalinputpin]);
   ultrasoundValue[digitalinputpin] = cm;  
 
+
   //  Serial.println(ultrasoundValue[digitalinputpin]);   
-  return ultrasoundValue[digitalinputpin]; 
+  return abs(ultrasoundValue[digitalinputpin]); 
 }
 
 
@@ -106,6 +103,18 @@ void loop()
     for (digitalinputpin = 0; digitalinputpin < NUMDIGINPUTS; digitalinputpin++) {
       int x = 0;
       x = ping(digitalinputpin);
+      // put elimination logic here. 
+        if ( x > 800) {
+           x = lastvalue[digitalinputpin];
+          }
+          
+        if ( x < 0) {
+           x = lastvalue[digitalinputpin];
+        }  
+          
+          
+        lastvalue[digitalinputpin] = x;
+      
       Serial.print(x,DEC);
       Serial.print(' ');    
       // Blink an LED and include a DELAY between each sensor pulse. 
