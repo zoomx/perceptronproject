@@ -76,7 +76,23 @@ unsigned long ping(int digitalinputpin){
 }
 
 
-int smoothfilter(int x, int digitalinputpin){
+int smoothfilter_old(int x, int digitalinputpin){
+
+  // Moving average smoothing filter implementation.
+  total[digitalinputpin] -= readings[digitalinputpin][index[digitalinputpin]];
+  readings[digitalinputpin][index[digitalinputpin]] = x;
+  total[digitalinputpin] += readings[digitalinputpin][index[digitalinputpin]];
+  index[digitalinputpin] = (index[digitalinputpin] + 1);
+
+  if (index[digitalinputpin] >= NUMREADINGS)
+    index[digitalinputpin] = 0;
+
+  average = total[digitalinputpin] / NUMREADINGS;
+
+  return average; 
+}
+
+int smoothfilter_old(int x, int digitalinputpin){
 
   // Moving average smoothing filter implementation.
   total[digitalinputpin] -= readings[digitalinputpin][index[digitalinputpin]];
