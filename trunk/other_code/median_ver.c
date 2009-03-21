@@ -1,7 +1,7 @@
 // #include <stdio.h>
 
 
-#define NUMREADINGS 2    // number of readings to apply the filter over. Change to decreaase lag, or improve noise problems. 
+#define NUMREADINGS 3    // number of readings to apply the filter over. Change to decreaase lag, or improve noise problems. 
 #define NUMDIGINPUTS 4   // number of sensors connected. 
 #define LOOPDELAY 50
 #define TIMEOUT 1000     // timeout for echo pulse return in milliseconds. 
