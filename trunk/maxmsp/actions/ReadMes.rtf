@@ -4,7 +4,7 @@
 \margl1440\margr1440\vieww9000\viewh8400\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
 
-\f0\b\fs24 \cf0 BackwardDeltaVarThresInt.maxpat 
+\f0\b\fs24 \cf0 BackwardDeltaVarThreshInt.maxpat 
 \f1\b0 \
 compares new value vs last value and outputs the backward difference if over the threshold.   Works only with int values, threshold can be changed on the fly.\
 \
@@ -12,6 +12,71 @@ declarations: none\
 inputs: new value, threshold\
 outputs: delta value, bang on delta output\
 \
-  \
 \
+
+\f0\b BackwardDeltaThreshInt.maxpat 
+\f1\b0 \
+compares new value vs last value and outputs the backward difference if over the threshold which is set at declaration.   Works only with int values.\
+\
+declarations: threshold\
+inputs: new value\
+outputs: delta value, bang on delta output\
+\
+\
+
+\f0\b ClosedCountingGate.maxpat
+\f1\b0 \
+a closed gate that opens for the declared number \
+of clock cycles provided in input 1.\
+\
+declarations: # of seconds to count\
+inputs: bang to run counter, bang to open gate,  data to gate\
+outputs: data when gate is open\
+\
+
+\f0\b ClosedSecCountingGate.maxpat
+\f1\b0 \
+a closed gate that opens for the declared number of seconds.\
+\
+declarations: # of seconds to count\
+inputs: bang to open gate,  data to gate\
+outputs: data when gate is open\
+\
+
+\f0\b ContinuousOutputCount.maxpat
+\f1\b0 \
+outputs a count of how often it's receive the same value in a row.\
+a new value clears the count to 1.\
+\
+declarations: none\
+inputs: value to count\
+output: times in a row the input has been repeated.\
+\
+
+\f0\b DeltaThresholdStatic.maxpat
+\f1\b0 \
+Outputs the incoming value if greater than the declared threshold different than the last value.\
+\
+declarations: threshold size (int)\
+inputs: int new value\
+output: int new value if more than the threshold different than last value output\
+\
+\
+
+\f0\b OpenCountingGate.maxpat
+\f1\b0 \
+an open gate that closes for some number of bangs after data goes through.\
+\
+declarations: bangs to count,\
+inputs:  bang to drive counter, data to gate (which also triggers closing of gate)\
+outputs: data when gate is open\
+\
+
+\f0\b OpenSecCountingGate.maxpat
+\f1\b0 \
+an open gate that closes for some number of seconds after data goes through.\
+\
+declarations: seconds to count,\
+inputs:  data to gate, which also triggers closing of gate\
+outputs: data when gate is open\
 }
