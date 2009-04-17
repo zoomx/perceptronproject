@@ -1,132 +1,103 @@
-// #include <stdio.h>
-
-
-#define NUMREADINGS 2    // number of readings to apply the filter over. Change to decreaase lag, or improve noise problems. 
-#define NUMDIGINPUTS 1   // number of sensors connected. 
-#define LOOPDELAY 250
+#define NUMDIGINPUTS 4   // number of sensors connected. 
 #define TIMEOUT 1000     // timeout for echo pulse return in milliseconds. 
 #define LEDpin 13
 
-int ultraSoundSignal[NUMDIGINPUTS] = {6};  // Ultrasound signal pin
-unsigned long ultrasoundValue[NUMDIGINPUTS] = {0}; //,0,0,0}; 
-unsigned char ultrasoundStates[NUMDIGINPUTS] = {0};
+#define PRINT_EVERY 100 // print output every PRINT_EVERY loop()s.  higher is slower
+
+int ultrasoundSignal[NUMDIGINPUTS] = {3,3,3,3};  // Ultrasound signal pins -- all 3 for testing with one sensor
+unsigned long ultrasoundValue[NUMDIGINPUTS] = {0,0,0,0}; // Last time we saw the pin go high
+unsigned char ultrasoundStates[NUMDIGINPUTS] = {0,0,0,0}; // Last line value we've read in 
+unsigned long ultrasoundTimes[NUMDIGINPUTS] = {0,0,0,0}; // The reading for this sensor
+
+int ledstate = 0;
+
 int started;
 
-unsigned long readings[NUMDIGINPUTS][NUMREADINGS];  // the readings from the analog input.
 
-int reading_i = 0; // index to which slot to load data into
+int num_rounds = 0;
 
 void setup()
 {
   Serial.begin(9600);
-  for (int i =0;i<NUMREADINGS; i++)  {
-    for (int j = 0; j<NUMDIGINPUTS;j++) {
-      readings[j][i]=0; // initialise all readings to zero.
-    } 
-  }
-  for (int k = 0;k<NUMDIGINPUTS; k++)  {
-    pinMode(ultraSoundSignal[k],OUTPUT);
+
+  int i;
+  for(i = 0; i < NUMDIGINPUTS; i++) {
+    pinMode(ultrasoundSignal[i], INPUT);
+    
+    ultrasoundValue[i] = 0;
+    ultrasoundStates[i] = 0;
+    ultrasoundTimes[i] = 0;
   }
 }
 
-long last_millis;
 
-void readloop() {
+void poll() {
+  /*
+    For every pin, we read the state of the pin, and look for boolean
+    transitions.  When we notice a rising edge (0->1), we note the
+    time in microseconds; when we find a falling edge (1->0), we
+    subtract the time.  We then store the distance detected in
+    centimeters into a variable.
 
-  for(int i = 0; i < NUMDIGINPUTS; i++) {
-    pinMode(ultraSoundSignal[i], INPUT);
-    int j =  digitalRead(ultraSoundSignal[i]);
+    So, we have to keep track of the states of the pins, the times of
+    the last transitions, and how far they detected.  You'll see those
+    up above.
+   */
+
+  for (int i = 0; i < NUMDIGINPUTS; i++) {
+    int j =  digitalRead(ultrasoundSignal[i]);
     
-    if(j && !ultrasoundStates[i]) { // rising edge
+    if (j && !ultrasoundStates[i]) { // rising edge!
       ultrasoundValue[i] = micros();
-    } else if (!j && ultrasoundStates[i]) { // falling edge
+      ultrasoundStates[i] = 1;
+    } else if (!j && ultrasoundStates[i]) { // falling edge!
       long t_now = micros();
       long dt = t_now - ultrasoundValue[i];
+      ultrasoundStates[i] = 0;
 
       long cm = microsecondsToCentimeters(dt);
 
-      // Serial.println("PULSE");
-      long cur_millis = millis();
-      
-      // Serial.println(last_millis - cur_millis);
-      last_millis = cur_millis;
-      //   Serial.println(i);
-      Serial.println(cm);
+      ultrasoundTimes[i] = cm;
     }
 
-    ultrasoundStates[i] = j;
+    digitalWrite(LEDpin, ledstate);
+    ledstate = !ledstate;
   }
 }
 
-unsigned long ping(int digitalinputpin){
-  // The PING is triggered by a HIGH pulse of 2 or more microseconds.
-  // We give a short LOW pulse beforehand to ensure a clean HIGH pulse.
-
-  pinMode(ultraSoundSignal[digitalinputpin], INPUT);
-	ultrasoundStates[digitalinputpin] = digitalRead(ultraSoundSignal[digitalinputpin]);	
-
-  // The same pin is used to read the signal from the PING: a HIGH
-  // pulse whose duration is the time (in microseconds) from the sending
-  // of the ping to the reception of its echo off of an object.
-
-  ultrasoundValue[digitalinputpin] = pulseIn(ultraSoundSignal[digitalinputpin], HIGH, TIMEOUT);
-//  int foo2 = pulseIn(ultraSoundSignal[digitalinputpin], LOW);
-  Serial.println(ultrasoundValue[digitalinputpin]);
-
-  // convert the time into a distance
-  long cm = microsecondsToCentimeters(ultrasoundValue[digitalinputpin]);
-  return cm;
-}
-
-long get_median(int input_i)
-{
-  int lc[NUMREADINGS];
-  for( int i = 0; i < NUMREADINGS; i++ )
-    lc[i] = readings[input_i][i];
-  for( int i = 0; i < NUMREADINGS; i++ )
-   for( int j = 0; j < NUMREADINGS; j++ )
-	if( lc[i] >= lc[j] )
-          {
-            lc[i] ^= lc[j];
-            lc[j] ^= lc[i];
-            lc[i] ^= lc[j];
-          }
-    
-  return lc[NUMREADINGS/2];
-}  
-
 void loop()
 {
+  /* paranoid josh worries that having Serial.available in the main
+     loop is going to cause too much sensor jitter, so he's going to
+     loop a bit below */
+
+
   if(Serial.available()) {
     started = Serial.read();
   }
 
-  while(1)
-  
-    readloop();
+  // Only yield to the serial port when we need to.
+  int i;
+  for(i = 0; i < 100; i++)
+    poll();
 
-  if(started!=48){ // max stop command
-  
-    reading_i++;
-    
-    if( reading_i == NUMREADINGS )
-      reading_i = 0;
 
-    for (int digitalinputpin = 0; digitalinputpin < NUMDIGINPUTS; digitalinputpin++)
-      readings[digitalinputpin][reading_i] = ping(digitalinputpin);      
-//    for (int digitalinputpin = 0; digitalinputpin < NUMDIGINPUTS; digitalinputpin++)
-//      {
-//	Serial.print(readings[digitalinputpin][reading_i],DEC);
-//	Serial.print(get_median(digitalinputpin),DEC);
-//	Serial.print(' ');
-//      }
+  
+  if (num_rounds == 0) {
+
+    /* '0' is Max's stop command: stop printing output until we
+       receive a new value */
+    if (started != '0') {
+      int k;
+      for (k = 0; k < NUMDIGINPUTS; k++) {
+	Serial.print(ultrasoundTimes[k]);
+	Serial.print(' ');
+      }
       
-    Serial.println();
-    // Blink an LED and include a DELAY between each sensor pulse. 
-    digitalWrite(LEDpin,HIGH); //turn LED on
-    delay(LOOPDELAY); //delay 1/4 seconds.
-    digitalWrite(LEDpin,LOW); //turn LED off    
+      Serial.println();
+    }
   }
+  num_rounds = (num_rounds+1) % PRINT_EVERY;
 }
 
 long microsecondsToInches(long microseconds)
@@ -141,6 +112,3 @@ long microsecondsToCentimeters(long microseconds)
   // object we take half of the distance travelled.
   return microseconds / 29 / 2;
 }
-
-// We also want to output midi and/or OSC. Midi is universal, 
-// and possibly simpler... so we will start with that. 
