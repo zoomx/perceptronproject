@@ -97,4 +97,14 @@ an open gate that closes for some number of seconds after data goes through.\
 declarations: seconds to count,\
 inputs:  data to gate, which also triggers closing of gate\
 outputs: data when gate is open\
-}
+\
+\
+
+\f0\b SamplePlayThresh.maxpat
+\f1\b0 \
+plays the declared sample, when data stream lowers more than the current threshold.\
+Once the sample triggers it will not play again in until the patch receives the declared number of bangs.  Used to set the retrigger speed.\
+\
+declarations:  Delta Threshold, buffer name, sample file name, retrigger count\
+inputs: bang to drive counter, int data stream to trigger sample\
+outputs: audio from sample playback}
