@@ -2,7 +2,7 @@
 #define TIMEOUT 1000     // timeout for echo pulse return in milliseconds. 
 #define LEDpin 13
 
-#define PRINT_EVERY 100 // print output every PRINT_EVERY loop()s.  higher is slower
+#define PRINT_EVERY 20 // print output every PRINT_EVERY loop()s.  higher is slower
 
 int ultrasoundSignal[NUMDIGINPUTS] = {3,3,3,3};  // Ultrasound signal pins -- all 3 for testing with one sensor
 unsigned long ultrasoundValue[NUMDIGINPUTS] = {0,0,0,0}; // Last time we saw the pin go high
