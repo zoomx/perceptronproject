@@ -4,7 +4,8 @@
 
 #define PRINT_EVERY 20 // print output every PRINT_EVERY loop()s.  higher is slower
 
-int ultrasoundSignal[NUMDIGINPUTS] = {3,3,3,3};  // Ultrasound signal pins -- all 3 for testing with one sensor
+int ultrasoundSignal[NUMDIGINPUTS] = {12,7,12,7};  // Ultrasound signal pins -- all 3 for testing with one sensor
+int ultrasoundTrigger[NUMDIGINPUTS] = {8,9,255,255}; // Ultrasound trigger pins; 255 for "Don't"
 unsigned long ultrasoundValue[NUMDIGINPUTS] = {0,0,0,0}; // Last time we saw the pin go high
 unsigned char ultrasoundStates[NUMDIGINPUTS] = {0,0,0,0}; // Last line value we've read in 
 unsigned long ultrasoundTimes[NUMDIGINPUTS] = {0,0,0,0}; // The reading for this sensor
@@ -13,16 +14,42 @@ int ledstate = 0;
 
 int started;
 
+long last_trigger_ms = 0;
+int last_trigger_offset = 0;
 
 int num_rounds = 0;
+
+void ping()
+{
+  int i;
+
+  // weird loop construct: loop through, trying to find the next pin
+  // to trigger
+
+  for(i = last_trigger_offset+1; i != last_trigger_offset; i = (i+1)%NUMDIGINPUTS) {
+    if (255 != ultrasoundTrigger[i]) {
+      digitalWrite(ultrasoundTrigger[i], HIGH);
+      delayMicroseconds(50);
+      digitalWrite(ultrasoundTrigger[i], LOW);
+      last_trigger_offset = i;
+      last_trigger_ms = millis();
+  
+      return;
+    }
+  }
+}
 
 void setup()
 {
   Serial.begin(9600);
 
+
   int i;
   for(i = 0; i < NUMDIGINPUTS; i++) {
     pinMode(ultrasoundSignal[i], INPUT);
+    pinMode(ultrasoundTrigger[i], OUTPUT);
+    digitalWrite(ultrasoundTrigger[i], LOW);
+	  
     
     ultrasoundValue[i] = 0;
     ultrasoundStates[i] = 0;
@@ -43,6 +70,9 @@ void poll() {
     the last transitions, and how far they detected.  You'll see those
     up above.
    */
+
+  if (55 > millis() - last_trigger_ms)
+    ping();
 
   for (int i = 0; i < NUMDIGINPUTS; i++) {
     int j =  digitalRead(ultrasoundSignal[i]);
