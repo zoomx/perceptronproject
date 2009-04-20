@@ -4,7 +4,7 @@
 
 #define PRINT_EVERY 20 // print output every PRINT_EVERY loop()s.  higher is slower
 
-int ultrasoundSignal[NUMDIGINPUTS] = {3,3,3,3};  // Ultrasound signal pins -- all 3 for testing with one sensor
+int ultrasoundSignal[NUMDIGINPUTS] = {3,6,8,11};  // Ultrasound signal pins -- all 3 for testing with one sensor
 unsigned long ultrasoundValue[NUMDIGINPUTS] = {0,0,0,0}; // Last time we saw the pin go high
 unsigned char ultrasoundStates[NUMDIGINPUTS] = {0,0,0,0}; // Last line value we've read in 
 unsigned long ultrasoundTimes[NUMDIGINPUTS] = {0,0,0,0}; // The reading for this sensor
