@@ -37,7 +37,7 @@ void ping_and_read(int sensor_no) {
   digitalWrite(ultrasoundTriggers[sensor_no], LOW);
 
   unsigned long t = pulseIn(ultrasoundSignal[sensor_no], HIGH, TIMEOUT);
-  ultrasoundValue[sensor_no] = microsecondsToCentimeters(t) / 100;
+  ultrasoundValue[sensor_no] = microsecondsToCentimeters(t);
 }
 
 void print_states() {
